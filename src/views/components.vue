@@ -94,6 +94,9 @@
                         <v-menu-item>
                             <router-link :to="{ name:'datatable'}">Datatable</router-link>
                         </v-menu-item>
+                        <v-menu-item>
+                            <router-link :to="{ name:'tree'}">Tree 树形控件</router-link>
+                        </v-menu-item>
                     </v-submenu>
                     <v-submenu title="Feedback">
                         <v-menu-item>

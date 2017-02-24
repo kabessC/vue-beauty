@@ -171,6 +171,11 @@ export default [
                 path: 'datatable',
                 name: 'datatable',
                 component: require('./docs/zh-cn/datatable.md')
+            },
+            {
+                path: 'tree',
+                name: 'tree',
+                component: require('./docs/zh-cn/tree.md')
             }
         ]
   }
