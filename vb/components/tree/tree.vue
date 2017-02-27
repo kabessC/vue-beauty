@@ -10,8 +10,8 @@
       ></span>
       <span
         v-if="checkable"
-        :class="checkboxCls"
-        @click="setCheck(item.disabled || item.disableCheckbox, index)"
+        :class="checkboxCls(item)"
+        @click.prevent="setCheck(item.disabled || item.disableCheckbox, index)"
       >
           <span :class="prefixCls + '-checkbox-inner'"></span>
       </span>
@@ -22,15 +22,15 @@
       >
           <span :class="prefixCls + '-title'" v-html="item.title"></span>
       </a>
-      <v-tree
+      <tree
         v-if="!item.isLeaf"
         :data-source="item.node"
-        :key="this.key + '.' + index"
+        :eventKey="`${eventKey}-${index}`"
         :multiple="multiple"
         :checkable="checkable"
-        :class="{[prefixCls+'-child-tree-open']: item.expanded}"
-        v-show="item.expanded"
-        transition="slide-up"></v-tree>
+        :class="{[prefixCls+'-child-tree-open']: item.expand}"
+        v-show="item.expand"
+        transition="slide-up"></tree>
     </li>
   </ul>
 </template>
@@ -41,7 +41,7 @@ export default {
   name: 'Tree',
   mixins: [emitter],
   props: {
-    key: {
+    eventKey: {
       type: String,
       default: '0'
     },
@@ -65,7 +65,7 @@ export default {
   }),
   computed: {
     treeCls() {
-      if (this.key === '0') {
+      if (this.eventKey === '0') {
         return this.prefixCls;
       } else {
         return `${this.prefixCls}-child-tree`;
@@ -73,25 +73,25 @@ export default {
     }
   },
   watch: {
-    dataSource(){
-      if (this.key === '0') {
+    dataSource() {
+      if (this.eventKey === '0') {
         this.setKey();
         this.preHandle();
       }
     }
   },
-  mouted(){
+  mounted() {
     this.setKey();
     this.preHandle();
     
     this.$on('nodeSelected', (ori, selected) => {
-      if (this.key !== '0') {
+      if (this.eventKey !== '0') {
         return true;
       }
       if (!this.multiple && selected){
         if (this !== ori) {
           for(let i = 0; i < this.dataSource.length; i++) {
-            this.$set(`dataSource[${i}].selected`, false);
+            this.$set(this.dataSource[i], 'selected', false);
           }
         }
         this.broadcast('cancelSelected', ori);
@@ -108,41 +108,41 @@ export default {
 
       if(this !== ori) {
         for(let i = 0; i < this.dataSource.length; i++) {
-          this.$set(`dataSource[${i}].selected`, false);
+          this.$set(this.dataSource[i], 'selected', false);
         }
       }
     });
 
-    this.$on('parentChecked', (status, key) => {
-      if(this.key == key || this.key.startsWith(key+'.')) {
+    this.$on('parentChecked', (params) => {
+      if(this.eventKey == params.eventKey || this.eventKey.startsWith(params.eventKey + '-')) {
         for(let i = 0; i < this.dataSource.length; i++) {
-          this.$set(`dataSource[${i}].checked`, status);
-          this.$set(`dataSource[${i}].childrenCheckedStatus`, status ? 2 : 0);
+          this.$set(this.dataSource[i], 'checked', params.status);
+          this.$set(this.dataSource[i], 'childrenCheckedStatus', params.status ? 2 : 0);
         }
-        this.broadcast('parentChecked', status,key);
+        this.broadcast('Tree', 'parentChecked', params);
       }
     });
 
-    this.$on('childChecked', (ori, key) => {
-      if (this.key === '0' && this.onCheck) {
+    this.$on('childChecked', (params) => {
+      if (this.eventKey === '0' && this.onCheck) {
         this.$nextTick(() => {
           this.onCheck(this.getCheckedNodes());
         });
       }
-      if (this === ori) {
+      if (this === params.origin) {
         return;
       }
 
       for (let [i, item] of this.dataSource.entries()) {
-        if (`${this.key}.${i}` == key) {
+        if (`${this.eventKey}-${i}` == params.eventKey) {
           let temp = this.getChildrenCheckedStatus(item.node);
 
           if (temp != item.childrenCheckedStatus) {
-            this.$set(`dataSource[${i}].checked`, temp ? true : false);
-            this.$set(`dataSource[${i}].childrenCheckedStatus`, temp);
+            this.$set(this.dataSource[i], 'checked', temp ? true : false);
+            this.$set(this.dataSource[i], 'childrenCheckedStatus', temp);
 
-            if (this.key !== '0') {
-              this.dispatch('childChecked', this, this.key);
+            if (this.eventKey !== '0') {
+              this.dispatch('Tree', 'childChecked', params);
             }
           }
         }
@@ -158,7 +158,7 @@ export default {
       ];
     },
     switcherCls(item) {
-      const expandedState = item.expanded ? 'open' : 'close';
+      const expandedState = item.expand ? 'open' : 'close';
 
       return [
         `${this.prefixCls}-switcher`,
@@ -193,32 +193,32 @@ export default {
     },
     setKey() {
       for (let i = 0; i < this.dataSource.length; i++) {
-        this.dataSource[i].key = `${this.key}.${i}`;
+        this.dataSource[i].eventKey = `${this.eventKey}-${i}`;
       }
     },
     preHandle() {
       for (let [i, item] of this.dataSource.entries()) {
         if (!item.node || !item.node.length) {
-          this.$set(`dataSource[${i}].isLeaf`, true);
-          this.$set(`dataSource[${i}].childrenCheckedStatus`, 2);
+          this.$set(this.dataSource[i], 'isLeaf', true);
+          this.$set(this.dataSource[i], 'childrenCheckedStatus', 2);
           continue;
         }
         if (item.checked && !item.childrenCheckedStatus) {
-          this.$set(`dataSource[${i}].childrenCheckedStatus`, 2);
-          this.broadcast('Tree', 'parentChecked', true, `${this.key}.${i}`);
+          this.$set(this.dataSource[i], 'childrenCheckedStatus', 2);
+          this.broadcast('Tree', 'parentChecked', { status: true, eventKey: `${this.eventKey}-${i}` });
         } else {
           let status = this.getChildrenCheckedStatus(item.node);
-          this.$set(`dataSource[${i}].childrenCheckedStatus`, status);
+          this.$set(this.dataSource[i], 'childrenCheckedStatus', status);
           
           if (status !== 0) {
-            this.$set(`dataSource[${i}].checked`, true);
+            this.$set(this.dataSource[i] ,'checked', true);
           }
         }
       }
     },
     setExpand(disabled, index) {
       if (!disabled) {
-        this.$set(`dataSource[${index}].expanded`, !this.dataSource[index].expanded);
+        this.$set(this.dataSource[index], 'expand', !this.dataSource[index].expand);
       }
     },
     setSelect(disabled, index) {
@@ -226,13 +226,13 @@ export default {
         const selected = !this.dataSource[index].selected;
 
         if (this.multiple || !selected){
-          this.$set(`dataSource[${index}].selected`, selected);
+          this.$set(this.dataSource[index], 'selected', selected);
         } else {
           for (let i = 0; i < this.dataSource.length; i++) {
             if (i == index) {
-              this.$set(`dataSource[${i}].selected`, true);
+              this.$set(this.dataSource[i], 'selected', true);
             } else {
-              this.$set(`dataSource[${i}].selected`, false);
+              this.$set(this.dataSource[i], 'selected', false);
             }
           }
         }
@@ -243,11 +243,12 @@ export default {
       if (disabled) {
         return;
       }
+
       const checked = !this.dataSource[index].checked;
-      this.$set(`dataSource[${index}].checked`, checked);
-      this.$set(`dataSource[${index}].childrenCheckedStatus`, checked ? 2 : 0);
-      this.$emit('childChecked', this, this.key);
-      this.broadcast('parentChecked', checked, `${this.key}.${index}`);
+      this.$set(this.dataSource[index], 'checked', checked);
+      this.$set(this.dataSource[index], 'childrenCheckedStatus', checked ? 2 : 0);
+      this.dispatch('Tree', 'childChecked', { origin: this, eventKry: this.eventKey });
+      this.broadcast('Tree', 'parentChecked', { status: checked, eventKey: `${this.eventKey}-${index}` });
     },
     getNodes(data, opt) {
       data = data || this.dataSource;
@@ -284,7 +285,7 @@ export default {
         if (child.checked) {
           checkNum++;
         }
-        if(child.childrenCheckedStatus !== 2){
+        if (child.childrenCheckedStatus !== 2) {
           child_childrenAllChecked = false;
         }
       }
