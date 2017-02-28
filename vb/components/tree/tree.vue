@@ -18,7 +18,7 @@
       <a
         :title="item.title"
         :class="selectHandleCls(item)"
-        @click="setSelect(item.disabled, index)"
+        @click.prevent="setSelect(item.disabled, index)"
       >
           <span :class="prefixCls + '-title'" v-html="item.title"></span>
       </a>
@@ -56,9 +56,7 @@ export default {
     checkable: {
       type: Boolean,
       default: false
-    },
-    onSelect: Function,
-    onCheck: Function
+    }
   },
   data: () => ({
     prefixCls: 'ant-tree'
@@ -94,17 +92,16 @@ export default {
             this.$set(this.dataSource[i], 'selected', false);
           }
         }
-        this.broadcast('cancelSelected', ori);
+        this.broadcast('Tree','cancelSelected', ori);
       }
-      if(this.onSelect) {
-        this.$nextTick(() =>{
-          this.onSelect(this.getSelectedNodes());
-        });
-      }
+
+      this.$nextTick(() => {
+        this.$emit('on-select', this.getSelectedNodes());
+      });
     });
 
     this.$on('cancelSelected', ori => {
-      this.broadcast('cancelSelected', ori);
+      this.broadcast('Tree', 'cancelSelected', ori);
 
       if(this !== ori) {
         for(let i = 0; i < this.dataSource.length; i++) {
@@ -114,6 +111,7 @@ export default {
     });
 
     this.$on('parentChecked', (params) => {
+      console.log(this.eventKey);
       if(this.eventKey == params.eventKey || this.eventKey.startsWith(params.eventKey + '-')) {
         for(let i = 0; i < this.dataSource.length; i++) {
           this.$set(this.dataSource[i], 'checked', params.status);
@@ -124,25 +122,25 @@ export default {
     });
 
     this.$on('childChecked', (params) => {
-      if (this.eventKey === '0' && this.onCheck) {
-        this.$nextTick(() => {
-          this.onCheck(this.getCheckedNodes());
-        });
-      }
+      if(this.eventKey === '0'){
+          this.$nextTick(() => {
+            this.$emit('on-check', this.getCheckedNodes());
+          });
+        }
       if (this === params.origin) {
         return;
       }
 
       for (let [i, item] of this.dataSource.entries()) {
-        if (`${this.eventKey}-${i}` == params.eventKey) {
+        if (`${this.eventKey}-${i}` === params.eventKey) {
           let temp = this.getChildrenCheckedStatus(item.node);
 
-          if (temp != item.childrenCheckedStatus) {
+          if (temp !== item.childrenCheckedStatus) {
             this.$set(this.dataSource[i], 'checked', temp ? true : false);
             this.$set(this.dataSource[i], 'childrenCheckedStatus', temp);
 
             if (this.eventKey !== '0') {
-              this.dispatch('Tree', 'childChecked', params);
+              this.dispatch('Tree', 'childChecked', { origin: this, eventKey: this.eventKey });
             }
           }
         }
@@ -229,14 +227,14 @@ export default {
           this.$set(this.dataSource[index], 'selected', selected);
         } else {
           for (let i = 0; i < this.dataSource.length; i++) {
-            if (i == index) {
+            if (i === index) {
               this.$set(this.dataSource[i], 'selected', true);
             } else {
               this.$set(this.dataSource[i], 'selected', false);
             }
           }
         }
-        this.$emit('nodeSelected', this,selected);
+        this.$emit('nodeSelected', this, selected);
       }
     },
     setCheck(disabled, index) {
@@ -247,7 +245,7 @@ export default {
       const checked = !this.dataSource[index].checked;
       this.$set(this.dataSource[index], 'checked', checked);
       this.$set(this.dataSource[index], 'childrenCheckedStatus', checked ? 2 : 0);
-      this.dispatch('Tree', 'childChecked', { origin: this, eventKry: this.eventKey });
+      this.dispatch('Tree', 'childChecked', { origin: this, eventKey: this.eventKey });
       this.broadcast('Tree', 'parentChecked', { status: checked, eventKey: `${this.eventKey}-${index}` });
     },
     getNodes(data, opt) {
@@ -289,10 +287,10 @@ export default {
           child_childrenAllChecked = false;
         }
       }
-      //全选
+      // 全选
       if (checkNum === children.length) {
         return child_childrenAllChecked ? 2 : 1;
-      //部分选择
+      // 部分选择
       } else if (checkNum > 0) {
         return 1;
       } else {

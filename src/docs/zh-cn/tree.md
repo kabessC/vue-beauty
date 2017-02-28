@@ -1,6 +1,6 @@
 <script>
 export default {
-  data: function() {
+  data() {
     return {
       treeData: [{
         title: 'parent 1',
@@ -19,7 +19,7 @@ export default {
           title: 'parent 1-1',
           checked: true,
           node: [{
-            title: "<span style='color: #08c'>sss</span>",
+            title: "<span style='color: #08c'>sss</span>"
           }]
         }]
       }]
@@ -43,7 +43,7 @@ export default {
 
 ## 代码演示
 
-:::demo
+::: demo
 <summary>
   #### 基本
   最简单的用法，展示可勾选，可选中，禁用，默认展开等功能。
@@ -55,14 +55,15 @@ export default {
     :dataSource="treeData"
     :checkable="true"
     :multiple="true"
-    :on-select="selectFn"
-    :on-check="checkFn"
+    @on-select="selectFn"
+    @on-check="checkFn"
   >
   </v-tree>
 </template>
+
 <script>
 export default {
-  data: function() {
+  data() {
     return {
       treeData: [{
         title: 'parent 1',
@@ -81,7 +82,7 @@ export default {
           title: 'parent 1-1',
           checked: true,
           node: [{
-            title: "<span style='color: #08c'>sss</span>",
+            title: "<span style='color: #08c'>sss</span>"
           }]
         }]
       }]
