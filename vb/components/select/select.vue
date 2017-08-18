@@ -1,60 +1,170 @@
 <template>
-    <div :class="wrapCls" v-clickoutside="closeDropdown">
-        <div :class="selectionCls" role="combobox" aria-autocomplete="list" aria-haspopup="true" aria-expanded="false" tabindex="0" @click="toggleDropdown">
+    <div
+        :class="wrapCls"
+        v-clickoutside="closeDropdown">
+        <div
+            :class="selectionCls"
+            role="combobox"
+            aria-autocomplete="list"
+            aria-haspopup="true"
+            aria-expanded="false"
+            tabindex="0"
+            @click="toggleDropdown">
             <div class="ant-select-selection__rendered">
                 <template v-if="labels">
                     <ul v-if="multiple">
-                        <li v-for="(text,i) in labels" unselectable="unselectable" class="ant-select-selection__choice" :title="text" style="user-select: none;">
+                        <li
+                            v-for="(text,i) in labels"
+                            unselectable="unselectable"
+                            class="ant-select-selection__choice"
+                            :title="text"
+                            style="user-select: none;">
                             <div class="ant-select-selection__choice__content">{{text}}</div>
-                            <span class="ant-select-selection__choice__remove" @click="remove(i,text)"></span>
+                            <span
+                                class="ant-select-selection__choice__remove"
+                                @click="remove(i,text)"></span>
                         </li>
-                        <li v-if="search && multiple" class="ant-select-search ant-select-search--inline">
+                        <li
+                            v-if="search && multiple"
+                            class="ant-select-search ant-select-search--inline">
                             <div class="ant-select-search__field__wrap">
-                                <input class="ant-select-search__field" v-model="searchVal" :style="multipleSearchStyle" @focus="isSearchFocus = true" @blur="searchBlur" ref="searchInput" @keydown.delete="handleInputDelete">
-                                <span class="ant-select-search__field__mirror" ref="searchMirror">{{searchVal}}</span>
+                                <input
+                                    class="ant-select-search__field"
+                                    v-model="searchVal"
+                                    :style="multipleSearchStyle"
+                                    @focus="isSearchFocus = true"
+                                    @blur="searchBlur"
+                                    ref="searchInput"
+                                    @keydown.delete="handleInputDelete">
+                                <span
+                                    class="ant-select-search__field__mirror"
+                                    ref="searchMirror">
+                                    {{searchVal}}
+                                </span>
                             </div>
                         </li>
                     </ul>
-                    <div v-else class="ant-select-selection-selected-value" :title="labels" :style="{opacity: isSearchFocus?0.4:1}">{{labels}}</div>
+                    <div
+                        v-else
+                        class="ant-select-selection-selected-value"
+                        :title="labels"
+                        :style="{opacity: isSearchFocus?0.4:1}">
+                        {{labels}}
+                    </div>
                 </template>
-                <div v-show="((multiple && !labels.length) || (!multiple && !labels)) && !searchVal" unselectable="unselectable" class="ant-select-selection__placeholder" style="user-select: none;">{{placeholder}}</div>
-                <div v-if="search && !multiple" class="ant-select-search ant-select-search--inline">
+                <div
+                    v-show="((multiple && !labels.length) || (!multiple && !labels)) && !searchVal"
+                    unselectable="unselectable"
+                    class="ant-select-selection__placeholder"
+                    style="user-select: none;">
+                    {{placeholder}}
+                </div>
+                <div
+                    v-if="search && !multiple"
+                    class="ant-select-search ant-select-search--inline">
                     <div class="ant-select-search__field__wrap">
-                        <input class="ant-select-search__field" v-model="searchVal" @focus="isSearchFocus = true" @blur="searchBlur" ref="searchInput">
+                        <input
+                            class="ant-select-search__field"
+                            v-model="searchVal"
+                            @focus="isSearchFocus = true"
+                            @blur="searchBlur"
+                            ref="searchInput">
                         <span class="ant-select-search__field__mirror"></span>
                     </div>
                 </div>
             </div>
-            <span v-if="allowClear && labels && !multiple" unselectable="unselectable" class="ant-select-selection__clear" style="-webkit-user-select: none" @click.stop="clear"></span>
-            <span v-if="!multiple" class="ant-select-arrow" unselectable="unselectable" style="user-select: none;">
+            <span 
+                v-if="allowClear && labels && !multiple"
+                unselectable="unselectable"
+                class="ant-select-selection__clear"
+                style="-webkit-user-select: none"
+                @click.stop="clear"></span>
+            <span
+                v-if="!multiple"
+                class="ant-select-arrow"
+                unselectable="unselectable"
+                style="user-select: none;">
                 <b>
                 </b>
             </span>
         </div>
         <transition name="slide-up">
-            <div ref="dropdown" v-show="show" style="overflow: auto" :style="style" :class="dropdownCls">
+            <div
+                ref="dropdown"
+                v-show="show"
+                style="overflow: auto"
+                :style="style"
+                :class="dropdownCls">
                 <div style="overflow: auto;">
-                    <ul class="ant-select-dropdown-menu ant-select-dropdown-menu-vertical  ant-select-dropdown-menu-root"
-                    role="menu" aria-activedescendant="">
-                        <li v-if="loading" unselectable="unselectable" class="ant-select-dropdown-menu-item ant-select-dropdown-menu-item-disabled" role="menuitem" aria-selected="false" style="user-select: none;">{{loadingText}}</li>
+                    <ul
+                        ref="menu"
+                        class="ant-select-dropdown-menu ant-select-dropdown-menu-vertical  ant-select-dropdown-menu-root"
+                        role="menu"
+                        aria-activedescendant="">
+                        <li
+                            v-if="loading"
+                            unselectable="unselectable"
+                            class="ant-select-dropdown-menu-item ant-select-dropdown-menu-item-disabled"
+                            role="menuitem"
+                            aria-selected="false"
+                            style="user-select: none;">
+                            {{loadingText}}
+                        </li>
                         <template v-else>
-                            <li v-if="searchVal && remoteMethod && !data.length" unselectable="unselectable" class="ant-select-dropdown-menu-item ant-select-dropdown-menu-item-disabled" role="menuitem" aria-selected="false" style="user-select: none;">{{notFoundContent}}</li>
-                            <li v-if="searchVal && !remoteMethod && !searchFound" unselectable="unselectable" class="ant-select-dropdown-menu-item ant-select-dropdown-menu-item-disabled" role="menuitem" aria-selected="false" style="user-select: none;">{{notFoundContent}}</li>
+                            <li
+                                v-if="searchVal && remoteMethod && !data.length"
+                                unselectable="unselectable"
+                                class="ant-select-dropdown-menu-item ant-select-dropdown-menu-item-disabled"
+                                role="menuitem"
+                                aria-selected="false"
+                                style="user-select: none;">
+                                {{notFoundContent}}
+                            </li>
+                            <li
+                                v-if="searchVal && !remoteMethod && !searchFound"
+                                unselectable="unselectable"
+                                class="ant-select-dropdown-menu-item ant-select-dropdown-menu-item-disabled"
+                                role="menuitem"
+                                aria-selected="false"
+                                style="user-select: none;">
+                                {{notFoundContent}}
+                            </li>
                             <template v-for="(option,i) in ori_data">
                                 <template v-if="option.options">
-                                    <li v-show="option.show" class=" ant-select-dropdown-menu-item-group">
+                                    <li
+                                        v-show="option.show"
+                                        class=" ant-select-dropdown-menu-item-group">
                                         <div class="ant-select-dropdown-menu-item-group-title">
                                             {{option[groupLabel]}}
                                         </div>
-                                        <ul v-if="option.options.length" class="ant-select-dropdown-menu-item-group-list">
-                                            <li v-show="option.show" v-for="(item,index) in option.options" unselectable="unselectable" :class="['ant-select-dropdown-menu-item', {'ant-select-dropdown-menu-item-disabled': item.disabled}, {'ant-select-dropdown-menu-item-selected': item.selected}]" role="menuitem" aria-selected="false" style="user-select: none;" @click="select([i,index])">
+                                        <ul
+                                            v-if="option.options.length"
+                                            class="ant-select-dropdown-menu-item-group-list">
+                                            <li
+                                                ref="menuItem"
+                                                v-show="option.show"
+                                                v-for="(item,index) in option.options"
+                                                unselectable="unselectable"
+                                                :class="['ant-select-dropdown-menu-item', {'ant-select-dropdown-menu-item-active': `${groupActivedFirstKey}-${groupActivedSecondKey}` === `${i}-${index}`}, {'ant-select-dropdown-menu-item-disabled': item.disabled}, {'ant-select-dropdown-menu-item-selected': item.selected}]"
+                                                role="menuitem"
+                                                aria-selected="false"
+                                                style="user-select: none;"
+                                                @click="select([i,index])">
                                                 <slot :data="option">{{item[label]}}</slot>
                                             </li>
                                         </ul>
                                     </li>
                                 </template>
                                 <template v-else>
-                                    <li v-show="option.show" unselectable="unselectable" :class="['ant-select-dropdown-menu-item', {'ant-select-dropdown-menu-item-disabled': option.disabled}, {'ant-select-dropdown-menu-item-selected': option.selected}]" role="menuitem" aria-selected="false" style="user-select: none;" @click="select(i)">
+                                    <li
+                                        ref="menuItem"
+                                        v-show="option.show"
+                                        unselectable="unselectable"
+                                        :class="['ant-select-dropdown-menu-item', {'ant-select-dropdown-menu-item-active': activedKey === i}, {'ant-select-dropdown-menu-item-disabled': option.disabled}, {'ant-select-dropdown-menu-item-selected': option.selected}]"
+                                        role="menuitem"
+                                        aria-selected="false"
+                                        style="user-select: none;"
+                                        @click="select(i)">
                                         <slot :data="option">{{option[label]}}</slot>
                                     </li>
                                 </template>
@@ -90,6 +200,9 @@
                 isSearchFocus: false,
                 dropdownHeight: 0,
                 container: null,
+                activedKey: -1,
+                groupActivedFirstKey: -1,
+                groupActivedSecondKey: -1
             };
         },
         props: {
@@ -176,10 +289,13 @@
             this.container.appendChild(this.$refs.dropdown);
 
             window.addEventListener('resize', this.setPosition);
+
+            document.addEventListener('keydown', this.handleKeydown);
         },
         beforeDestroy() {
             window.removeEventListener('resize', this.setPosition);
             this.container.removeChild(this.$refs.dropdown);
+            document.removeEventListener('keydown', this.handleKeydown);
         },
         watch: {
             innerValue(val) {
@@ -330,9 +446,16 @@
                         this.labels = item[this.label];
                     }
                     if(type == 'item'){
+                        if (selected) {
+                            this.activedKey = path;
+                        }
                         this.$set(this.ori_data[path],'selected',selected);
                         this.$set(this.ori_data[path],'show',true);
                     }else{
+                        if (selected) {
+                            this.groupActivedFirstKey = path[0];
+                            this.groupActivedSecondKey = path[1];
+                        }
                         this.$set(this.ori_data[path[0]].options[path[1]],'selected',selected);
                         this.$set(this.ori_data[path[0]].options[path[1]],'show',true);
                     }
@@ -447,6 +570,127 @@
                     this.innerValue = opt[this.clue];
                     this.labels = opt[this.label];
                 }
+            },
+            isDisabled(i, j = null){
+                if (j && this.ori_data[i].options[j] && this.ori_data[i].options[j].disabled) {
+                    return true;
+                } else if (this.ori_data[i] && this.ori_data[i].disabled) {
+                    return true;
+                }
+
+                return false;
+            },
+            isGroup(){
+                if (this.ori_data.length >= 0) {
+                    if (this.ori_data[0].hasOwnProperty('options') && Array.isArray(this.ori_data[0].options)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            },
+            handleKeydown(e){
+                if (this.show) {
+                    if (e.keyCode === 38) {
+                        e.preventDefault();
+                        this.navigateOptions('prev');
+                    }
+                    if (e.keyCode === 40) {
+                        e.preventDefault();
+                        this.navigateOptions('next');
+                    }
+                    if (e.keyCode === 13) {
+                        e.preventDefault();
+                        if (this.isGroup()) {
+                            this.select([this.groupActivedFirstKey, this.groupActivedSecondKey]);
+                        } else {
+                            this.select(this.activedKey);
+                        }
+                        this.toggleDropdown();
+                    }
+                }
+            },
+            navigateOptions(type){
+                if (type === 'next') {
+                    if (this.isGroup()) {
+                        this.groupActivedSecondKey++;
+                        this.activedKey++;
+
+                        if (this.groupActivedSecondKey > this.ori_data[this.groupActivedFirstKey].options.length - 1) {
+                            this.groupActivedSecondKey = 0;
+                            this.groupActivedFirstKey++;
+                            
+                            if (this.groupActivedFirstKey > this.ori_data.length - 1) {
+                                this.groupActivedFirstKey = 0;
+                                this.activedKey = 0;
+                            }
+                        }
+                        if (this.isDisabled(this.groupActivedFirstKey, this.groupActivedSecondKey)) {
+                            this.navigateOptions('next');
+                        }
+                    } else {
+                        this.activedKey++;
+                        if (this.activedKey > this.ori_data.length - 1) {
+                            this.activedKey = 0;
+                        }
+
+                        if (this.isDisabled(this.activedKey)) {
+                            this.navigateOptions('next');
+                        }
+                    }
+                }
+
+                if (type === 'prev') {
+                    if (this.isGroup()) {
+                        this.groupActivedSecondKey--;
+                        this.activedKey--;
+
+                        if (this.groupActivedSecondKey < 0) {
+                            this.groupActivedFirstKey--;
+                            if (this.groupActivedFirstKey < 0) {
+                                this.groupActivedFirstKey = this.ori_data.length - 1;
+                                this.activedKey = this.ori_data.length - 1;
+                            }
+                            this.groupActivedSecondKey = this.ori_data[this.groupActivedFirstKey].options.length - 1;
+                        }
+
+                        if (this.isDisabled(this.groupActivedFirstKey, this.groupActivedSecondKey)) {
+                            this.navigateOptions('prev');
+                        }
+                    } else {
+                        this.activedKey--;
+                        if (this.activedKey < 0) {
+                            this.activedKey = this.ori_data.length - 1;
+                        }
+
+                        if (this.isDisabled(this.activedKey)) {
+                            this.navigateOptions('prev');
+                        }
+                    }
+                }
+
+                this.scrollToView();
+            },
+            scrollToView() {
+                const container = this.$refs.menu,
+                      target = container.children[this.activedKey];
+
+                if (!target) {
+                    container.scrollTop = 0;
+                    return;
+                }
+
+                const top = target.offsetTop;
+                const bottom = target.offsetTop + target.offsetHeight;
+                const viewRectTop = container.scrollTop;
+                const viewRectBottom = viewRectTop + container.clientHeight;
+
+                if (top < viewRectTop) {
+                    container.scrollTop = top;
+                } else if (bottom > viewRectBottom) {
+                    container.scrollTop = bottom - container.clientHeight;
+                }
+
             }
         }
     }
